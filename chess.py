@@ -1,3 +1,5 @@
+from pieces import *
+
 class ChessBoard():
     start_arrangement = {
         'white_pawn': {(6, int) for int in range(8)},
@@ -14,94 +16,95 @@ class ChessBoard():
         'black_king': {(0, 4)},
     }
 
-    pieces = {
-        'white_pawn': '♙',
-        'white_rook': '♖',
-        'white_knight': '♘',
-        'white_bishop': '♗',
-        'white_queen': '♕',
-        'white_king': '♔',
-        'black_pawn': '♟',
-        'black_rook': '♜',
-        'black_knight': '♞',
-        'black_bishop': '♝',
-        'black_queen': '♛',
-        'black_king': '♚',
-    }
-
     def __init__(self, height=8, width=8, dict=start_arrangement):
         self.height = height
         self.width = width
-        
-        self.black = {}
-        self.white = {}
+
+        # Create a board with all empty squares.
+        self.board = []
+        for i in range(self.height):
+            row = []
+            for j in range(self.width):
+                row.append(None)
+            self.board.append(row)
+
         item_count = 0
         total_set = set()
 
+        functions = {
+            'pawn': Pawn,
+            'rook': Rook,
+            'knight': Knight,
+            'bishop': Bishop,
+            'queen': Queen,
+            'king': King,
+        }
+
+        self.white = []
+        self.black = []
+
         for key, value in dict.items():
-            item_count += len(value)
-            total_set.update(value)
-            if 'white' in key:
-                self.white[key.split('_')[1]] = value
-            elif 'black' in key:
-                self.black[key.split('_')[1]] = value
-        
+            for cell in value:
+                item_count += 1
+                total_set.add(cell)
+                color = key.split('_')[0]
+                chessman = key.split('_')[1]
+                piece = functions[chessman](cell, color, self.height, self.width)
+                self.board[cell[0]][cell[1]] = piece
+                if color == 'white':
+                    self.white.append(piece)
+                else:
+                    self.black.append(piece)
+                    
         if item_count != len(total_set):
             raise Exception('Duplicate starting positions found. Please correct and try again.')
-
-        self.empty_spaces = set()
-        for row in range(height):
-            for col in range(width):
-                if (row, col) not in total_set:
-                    self.empty_spaces.add((row, col))
     
+
     def possible_moves(self, player):
         moves = []
         if player == 'white':
-            for key, value in self.white:
-                for cell in value:
-                    moves.extend(self.__moves(key, cell))
+            for piece in self.white:
+                for move in piece.moves():
+                    cell = self.board[move[0]][move[1]]
+                    if not cell:
+                        moves.append((piece.symbol, piece.position, move))
+                    elif cell.color == 'black':
+                        moves.append((piece.symbol, piece.position, move))
         elif player == 'black':
-            for key, value in self.black:
-                for cell in value:
-                    moves.extend(self.__moves(key, cell))
+            for piece in self.black:
+                for move in piece.moves():
+                    cell = self.board[move[0]][move[1]]
+                    if not cell:
+                        moves.append((piece.symbol, piece.position, move))
+                    elif cell.color == 'white':
+                        moves.append((piece.symbol, piece.position, move))
         return moves
     
-    def __moves(self, piece, cell):
-        pass
-    
-    def print_board(self, pieces=pieces):
-        for x in [' ', 'A' , 'B', 'C', 'D', 'E', 'F', 'G', 'H', ' ']:
-            print(f' {x} ', end='')
+
+    def print_board(self):
+        letters = ['0', '1', '2', '3', '4', '5', '6', '7']
+        print(' ', end='')
+        for letter in letters:
+            print(f' {letter} ', end='')
         print()
         for row in range(self.height):
-            print(f' {row+1} ', end='')
+            print("----" * self.width)
+            print(row, end='')
             for col in range(self.width):
-                added = False
-                for key, val in self.black.items():
-                    if (row, col) in val:
-                        print(f"[{pieces[f'black_{key}']}]", end='')
-                        added = True
-                        break
-                if added:
-                    continue
-                for key, val in self.white.items():
-                    if (row, col) in val:
-                        print(f"[{pieces[f'white_{key}']}]", end='')
-                        added = True
-                        break 
-                if added:
-                    continue
-                if (row, col) in self.empty_spaces:
-                    print('[•]', end='')
-            print(f' {row+1} ', end='')
-            print()
-        for x in [' ', 'A' , 'B', 'C', 'D', 'E', 'F', 'G', 'H', ' ']:
-            print(f' {x} ', end='')
+                cell = self.board[row][col]
+                if cell:
+                    print(f"|{cell.symbol} ", end='')
+                else:
+                    print("|  ", end='')
+            print("|", end='')
+            print(row)
+        print(' ', end='')
+        for letter in letters:
+            print(f' {letter} ', end='')
         print()
 
 
 board = ChessBoard()
 board.print_board()
-print(board.white)
+print(board.possible_moves('white'))
 
