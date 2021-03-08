@@ -1,7 +1,7 @@
 from pieces import *
 
 class ChessBoard():
-    '''
+    
     start_arrangement = {
         'white_pawn': {(6, int) for int in range(8)},
         'white_rook': {(7, 0), (7, 7)},
@@ -16,10 +16,9 @@ class ChessBoard():
         'black_queen': {(0, 3)},
         'black_king': {(0, 4)},
     }
-    '''
-
+    
     # Test
-    start_arrangement = {
+    start_arrangement2 = {
         'white_pawn': {(6, int) for int in range(8)},
         'white_rook': {(7, 0), (7, 7)},
         'white_knight': {(7, 1), (7, 6)},
@@ -58,21 +57,28 @@ class ChessBoard():
             'king': King,
         }
 
-        self.white = []
-        self.black = []
+        self.white = set()
+        self.black = set()
 
         for key, value in dict.items():
             for cell in value:
                 item_count += 1
                 total_set.add(cell)
+
                 color = key.split('_')[0]
+                if color not in ['black', 'white']:
+                    raise Exception(f"{key} is not valid. Please format as 'color_piece'.")
+
                 chessman = key.split('_')[1]
+                if chessman not in ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king']:
+                    raise Exception(f"{key} is not valid. Please format as 'color_piece'.")
+
                 piece = functions[chessman](cell, color)
                 self.board[cell[0]][cell[1]] = piece
                 if color == 'white':
-                    self.white.append(piece)
+                    self.white.add(piece)
                 else:
-                    self.black.append(piece)
+                    self.black.add(piece)
                     
         if item_count != len(total_set):
             raise Exception('Duplicate starting positions found. Please correct and try again.')
@@ -85,9 +91,9 @@ class ChessBoard():
                 for move in piece.moves(self.board):
                     cell = self.board[move[0]][move[1]]
                     if not cell:
-                        moves.append((piece.symbol, piece.position, move))
+                        moves.append((piece.position, move))
                     elif cell.color == 'black':
-                        moves.append((piece.symbol, piece.position, move))
+                        moves.append((piece.position, move))
         elif player == 'black':
             for piece in self.black:
                 for move in piece.moves(self.board):
@@ -99,7 +105,38 @@ class ChessBoard():
         return moves
     
 
-    def print_board(self):
+    def make_move(self, move):
+        board = self.board.copy()
+        start = move[0]
+        end = move[1]
+        piece = board[start[0]][start[1]]
+        piece.position = end
+        if board[end[0]][end[1]]:
+            opponent_piece = board[end[0]][end[1]]
+            opponent_piece.position = None
+            color = opponent_piece.color
+            if color == 'white':
+                self.white.remove(opponent_piece)
+            elif color == 'black':
+                self.black.remove(opponent_piece)
+        board[end[0]][end[1]] = piece
+        board[start[0]][start[1]] = None
+        return board
+
+    
+    def evaluate(self, board):
+        value = 0
+        for row in board:
+            for cell in row:
+                if cell:
+                    if cell.color == 'white':
+                        value += cell.value
+                    elif cell.color =='black':
+                        value -= cell.value
+        return value
+    
+
+    def print_board(self, board):
         letters = ['0', '1', '2', '3', '4', '5', '6', '7']
         print(' ', end='')
         for letter in letters:
@@ -109,7 +146,7 @@ class ChessBoard():
             print("----" * self.width)
             print(row, end='')
             for col in range(self.width):
-                cell = self.board[row][col]
+                cell = board[row][col]
                 if cell:
                     print(f"|{cell.symbol} ", end='')
                 else:
@@ -121,9 +158,18 @@ class ChessBoard():
             print(f' {letter} ', end='')
         print()
 
+import random
 
 board = ChessBoard()
-board.print_board()
+board.print_board(board.board)
 board.possible_moves('black')
-#print(board.possible_moves('black'))
 
+for i in range(300):
+    if i % 2 == 0:
+        move = random.choice(board.possible_moves('white'))
+    else:
+        move = random.choice(board.possible_moves('black'))
+    new_board = board.make_move(move)
+    board.print_board(new_board)
+    value = board.evaluate(new_board)
+    print(f'Move {move} caused the board to be worth {value}')
