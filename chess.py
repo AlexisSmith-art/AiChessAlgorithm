@@ -136,15 +136,38 @@ class ChessBoard():
         return value
     
 
+    def has_won(self, board):
+        white_king = False
+        black_king = False
+        for piece in self.white:
+            if type(piece).__name__ == 'King':
+                white_king = True
+        
+        for piece in self.black:
+            if type(piece).__name__ == 'King':
+                black_king = True
+        
+        if not black_king:
+            return 'white'
+        elif not white_king:
+            return 'black'
+        else:
+            return None
+
+    
+    def translate(self, move):
+        pass
+
+
     def print_board(self, board):
-        letters = ['0', '1', '2', '3', '4', '5', '6', '7']
+        letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
         print(' ', end='')
         for letter in letters:
             print(f' {letter} ', end='')
         print()
         for row in range(self.height):
             print("----" * self.width)
-            print(row, end='')
+            print(row + 1, end='')
             for col in range(self.width):
                 cell = board[row][col]
                 if cell:
@@ -152,17 +175,20 @@ class ChessBoard():
                 else:
                     print("|  ", end='')
             print("|", end='')
-            print(row)
+            print(row + 1)
         print(' ', end='')
         for letter in letters:
             print(f' {letter} ', end='')
         print()
 
+'''
 import random
 
 board = ChessBoard()
 board.print_board(board.board)
 board.possible_moves('black')
+print(board.has_won(board.board))
+
 
 for i in range(300):
     if i % 2 == 0:
@@ -172,4 +198,5 @@ for i in range(300):
     new_board = board.make_move(move)
     board.print_board(new_board)
     value = board.evaluate(new_board)
-    print(f'Move {move} caused the board to be worth {value}')
+    print(board.has_won(new_board))
+    print(f'Move {move} caused the board to be worth {value}')'''
