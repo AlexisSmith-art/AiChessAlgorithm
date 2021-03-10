@@ -68,7 +68,7 @@ class ChessMove():
             if move in self.opposings[self.color] and self._in_board(move):
                 moves.append(move)
 
-        print(self.color, ' Pawn @ ', position, ': ', moves)
+        # print(self.color, ' Pawn @ ', position, ': ', moves)
         return moves
     
 
@@ -92,7 +92,7 @@ class ChessMove():
                     moves.append(move)
                     x = move
 
-        print(self.color, ' Rook @ ', position, ': ', moves)
+        # print(self.color, ' Rook @ ', position, ': ', moves)
         return moves
     
     
@@ -118,7 +118,7 @@ class ChessMove():
             if move not in self.black_positions | self.white_positions or move not in self.positions[self.color]:
                 moves.append(move)
 
-        print(self.color, ' Knight @ ', position, ': ', moves)
+        # print(self.color, ' Knight @ ', position, ': ', moves)
         return moves
     
 
@@ -142,7 +142,7 @@ class ChessMove():
                     moves.append(move)
                     x = move
         
-        print(self.color, ' Bishop @ ', position, ': ', moves)
+        # print(self.color, ' Bishop @ ', position, ': ', moves)
         return moves
 
 
@@ -166,7 +166,7 @@ class ChessMove():
                     moves.append(move)
                     x = move
         
-        print(self.color, ' Queen @ ', position, ': ', moves)
+        # print(self.color, ' Queen @ ', position, ': ', moves)
         return moves
 
 
@@ -192,7 +192,7 @@ class ChessMove():
             if move not in self.black_positions | self.white_positions or move not in self.positions[self.color]:
                 moves.append(move)
         
-        print(self.color, ' King @ ', position, ': ', moves)
+        # print(self.color, ' King @ ', position, ': ', moves)
         return moves
 
     def _math(self, cell, x=0, y=0):

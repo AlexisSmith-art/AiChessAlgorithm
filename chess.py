@@ -1,4 +1,7 @@
 from chessMove import ChessMove
+import random
+import math
+import copy
 
 black = 'black'
 white = 'white'
@@ -8,6 +11,7 @@ knight = 'knight'
 bishop = 'bishop'
 queen = 'queen'
 king = 'king'
+letters = ['0', '1', '2', '3', '4', '5', '6', '7']
 
 class ChessBoard():
 
@@ -26,23 +30,7 @@ class ChessBoard():
         'white_king': {(7, 4)},
     }
 
-    # Test
-    start_arrangement2 = {
-        'white_pawn': {(6, int) for int in range(8)},
-        'white_rook': {(7, 0), (7, 7)},
-        'white_knight': {(7, 1), (7, 6)},
-        'white_bishop': {(7, 2), (7, 5)},
-        'white_queen': {(7, 3)},
-        'white_king': {(7, 4)},
-        'black_pawn': {(5, int) for int in range(8)},
-        'black_rook': {(0, 0), (0, 7)},
-        'black_knight': {(0, 1), (0, 6)},
-        'black_bishop': {(0, 2), (0, 5)},
-        'black_queen': {(0, 3)},
-        'black_king': {(0, 4)},
-    }
-
-    def __init__(self, height=8, width=8, dict=start_arrangement2):
+    def __init__(self, height=8, width=8, dict=start_arrangement):
         self.height = height
         self.width= width
         self._black_pieces = {}
@@ -84,6 +72,8 @@ class ChessBoard():
                     
 
     def make_move(self, move, black_pieces, white_pieces):
+        black_pieces = copy.deepcopy(black_pieces)
+        white_pieces = copy.deepcopy(white_pieces)
         previous = move[0]
         current = move[1]
         for b_piece, b_positions in black_pieces.items():
@@ -103,6 +93,11 @@ class ChessBoard():
     
 
     def evaluate(self, black_pieces, white_pieces):
+        winner = self.has_won(black_pieces, white_pieces)
+        if winner == black:
+            return math.inf
+        elif winner == white:
+            return -math.inf
         value = 0
         worth = {
             pawn: 1,
@@ -143,10 +138,9 @@ class ChessBoard():
             f'{white}_{king}': '♔',
         }
         board = self._generate_board(self._black_pieces, self._white_pieces)
-        letters = ['0', '1', '2', '3', '4', '5', '6', '7']
         print(' ', end='')
-        for letter in letters:
-            print(f' {letter} ', end='')
+        for i in range(self.width):
+            print(f' {letters[i]} ', end='')
         print()
         for index, row in enumerate(board):
             print("----" * self.width)
@@ -159,8 +153,8 @@ class ChessBoard():
             print("|", end='')
             print(index)
         print(' ', end='')
-        for letter in letters:
-            print(f' {letter} ', end='')
+        for i in range(self.width):
+            print(f' {letters[i]} ', end='')
         print()
                     
 
@@ -194,11 +188,26 @@ class ChessBoard():
     def _has_won(self):
         return self.has_won(self._black_pieces, self._white_pieces)
     
-    
-board = ChessBoard()
-board.print_board()
-board.possible_moves(white, board._black_pieces, board._white_pieces)
+
 '''
-board._set_positions(((0, 4), (7, 5)))
-print(board.black_pieces)
-print(board.white_pieces)'''
+for val in range(300):
+    moves = board.possible_moves(white, board._black_pieces, board._white_pieces)
+    try:
+        move = random.choice(moves)
+        board.print_board()
+        print(move)
+        board._set_positions(move)
+    except:
+        continue
+    print(f'Value is: {board._evaluate()}, Winner is: {board._has_won()}')
+
+    moves = board.possible_moves(black, board._black_pieces, board._white_pieces)
+    try:
+        move = random.choice(moves)
+        board.print_board()
+        print(move)
+        board._set_positions(move)
+    except:
+        continue
+    print(f'Value is: {board._evaluate()}, Winner is: {board._has_won()}')
+'''
