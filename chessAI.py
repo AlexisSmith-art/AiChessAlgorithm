@@ -1,6 +1,7 @@
 from chess import ChessBoard
 import math
 import random
+import copy
 
 script_player = "Do you want to be the white or black player?"
 script_player_error = "I'm sorry. Please enter white or black."
@@ -17,9 +18,10 @@ class ChessAI(ChessBoard):
         player = response
         ai = 'black' if response == 'white' else 'black'
 
-        self.print_board(self.board)
+        current_board = self.board
+        self.print_board(current_board)
         print(script_move)
-        possible_moves = self.possible_moves(player)
+        possible_moves = self.possible_moves(player, current_board)
         for index, move in enumerate(possible_moves):
             print(f'Move {index}: {move}')
         response = input()
@@ -27,35 +29,43 @@ class ChessAI(ChessBoard):
             print(script_move_error)
             response = input()
         player_move = possible_moves[int(response)]
-        self.make_move(player_move)
-        ai_move = self.__best_move(3, player=ai)
-        self.make_move(ai_move)
-        self.print_board(self.board)
+        current_board = self.make_move(player_move, current_board)
+        self.print_board(current_board)
+        ai_move = self.__best_move(current_board, 3, color=ai)
+        current_board = self.make_move(ai_move, current_board)
+        self.print_board(current_board)
 
-    def __minimax(self, board, depth=3, player='white'):
+    def __minimax(self, board, depth=3, color='white'):
+        print('depth', depth)
         if depth == 0 or self.has_won(board):
             return self.evaluate(board)
         
-        if player == 'white':
+        if color == 'white':
             value = -math.inf
-            for move in self.possible_moves(board):
-                new_board = self.make_move(move)
-                value = max(value, self.__minimax(new_board, depth - 1, 'black'))
+            print(self.possible_moves('white', board))
+            for move in self.possible_moves('white', board):
+                self.print_board(board)
+                print('move', move)
+                new_board = self.make_move(move, board)
+                value = max(value, self.__minimax(copy.deepcopy(new_board), depth-1, 'black'))
             return value
         else:
             value = math.inf
-            for move in self.possible_moves(board):
-                new_board = self.make_move(move)
-                value = min(value, self.__minimax(new_board, depth -1, 'white'))
+            print(self.possible_moves('black', board))
+            for move in self.possible_moves('black', board):
+                self.print_board(board)
+                print('move', move)
+                new_board = self.make_move(move, board)
+                value = min(value, self.__minimax(copy.deepcopy(new_board), depth-1, 'white'))
             return value
     
-    def __best_move(self, depth, player):
+    def __best_move(self, board, depth, color):
         best_moves = []
-        if player == 'white':
+        if color == 'white':
             value = -math.inf
-            for move in self.possible_moves(self.board):
-                new_board = self.make_move(move)
-                new_value = max(value, self.__minimax(new_board, depth, 'black'))
+            for move in self.possible_moves('white', board):
+                new_board = self.make_move(move, board)
+                new_value = max(value, self.__minimax(copy.deepcopy(new_board), depth, 'black'))
                 if new_value > value:
                     best_moves = []
                     value = new_value
@@ -63,11 +73,10 @@ class ChessAI(ChessBoard):
                 elif new_value == value:
                     best_moves.append(move)
         else:
-            print('here????')
             value = math.inf
-            for move in self.possible_moves(self.board):
-                new_board = self.make_move(move)
-                new_value = min(value, self.__minimax(new_board, depth -1, 'white')) 
+            for move in self.possible_moves('black', board):
+                new_board = self.make_move(move, board)
+                new_value = min(value, self.__minimax(copy.deepcopy(new_board), depth, 'white')) 
                 if new_value < value:
                     best_moves = []
                     value = new_value

@@ -1,22 +1,31 @@
-from pieces import *
+from piece import ChessPiece
+
+black = 'black'
+white = 'white'
+pawn = 'pawn'
+rook = 'rook'
+knight = 'knight'
+bishop = 'bishop'
+queen = 'queen'
+king = 'king'
 
 class ChessBoard():
-    
+
     start_arrangement = {
-        'white_pawn': {(6, int) for int in range(8)},
-        'white_rook': {(7, 0), (7, 7)},
-        'white_knight': {(7, 1), (7, 6)},
-        'white_bishop': {(7, 2), (7, 5)},
-        'white_queen': {(7, 3)},
-        'white_king': {(7, 4)},
         'black_pawn': {(1, int) for int in range(8)},
         'black_rook': {(0, 0), (0, 7)},
         'black_knight': {(0, 1), (0, 6)},
         'black_bishop': {(0, 2), (0, 5)},
         'black_queen': {(0, 3)},
         'black_king': {(0, 4)},
+        'white_pawn': {(6, int) for int in range(8)},
+        'white_rook': {(7, 0), (7, 7)},
+        'white_knight': {(7, 1), (7, 6)},
+        'white_bishop': {(7, 2), (7, 5)},
+        'white_queen': {(7, 3)},
+        'white_king': {(7, 4)},
     }
-    
+
     # Test
     start_arrangement2 = {
         'white_pawn': {(6, int) for int in range(8)},
@@ -35,168 +44,148 @@ class ChessBoard():
 
     def __init__(self, height=8, width=8, dict=start_arrangement):
         self.height = height
-        self.width = width
-
-        # Create a board with all empty squares.
-        self.board = []
-        for i in range(self.height):
-            row = []
-            for j in range(self.width):
-                row.append(None)
-            self.board.append(row)
-
-        item_count = 0
-        total_set = set()
-
-        functions = {
-            'pawn': Pawn,
-            'rook': Rook,
-            'knight': Knight,
-            'bishop': Bishop,
-            'queen': Queen,
-            'king': King,
-        }
-
-        self.white = set()
-        self.black = set()
+        self.width= width
+        self._black_pieces = {}
+        self._white_pieces = {}
 
         for key, value in dict.items():
-            for cell in value:
-                item_count += 1
-                total_set.add(cell)
+            color = key.split('_')[0]
+            if color not in [black, white]:
+                raise Exception(f"{key} is not valid. Please use {black} or {white} formatted as color_piece.")
 
-                color = key.split('_')[0]
-                if color not in ['black', 'white']:
-                    raise Exception(f"{key} is not valid. Please format as 'color_piece'.")
+            chessman = key.split('_')[1]
+            if chessman not in ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king']:
+                raise Exception(f"{key} is not valid. Please use 'pawn', 'rook', 'knight', 'bishop', 'queen', or 'king' formated as 'color_piece'.")
 
-                chessman = key.split('_')[1]
-                if chessman not in ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king']:
-                    raise Exception(f"{key} is not valid. Please format as 'color_piece'.")
+            if color == black:
+                self._black_pieces[chessman] = value
+            elif color == white:
+                self._white_pieces[chessman] = value
+    
+    '''
+    def possible_moves(self, player, white_pieces, black_pieces):
+        all_moves = []
+        if player == white:
+            for piece, positions in white_pieces:
+                for position in positions:
+                    moves = ChessPiece().move(player, piece, white_pieces, black_pieces)'''
 
-                piece = functions[chessman](cell, color)
-                self.board[cell[0]][cell[1]] = piece
-                if color == 'white':
-                    self.white.add(piece)
-                else:
-                    self.black.add(piece)
-                    
-        if item_count != len(total_set):
-            raise Exception('Duplicate starting positions found. Please correct and try again.')
+
+    def make_move(self, move, black_pieces, white_pieces):
+        previous = move[0]
+        current = move[1]
+        for b_piece, b_positions in black_pieces.items():
+            if previous in b_positions:
+                black_pieces[b_piece].remove(previous)
+                black_pieces[b_piece].add(current)
+            elif current in b_positions:
+                black_pieces[b_piece].remove(current)
+        
+        for w_piece, w_positions in white_pieces.items():
+            if previous in w_positions:
+                white_pieces[w_piece].remove(previous)
+                white_pieces[w_piece].add(current)
+            elif current in w_positions:
+                white_pieces[w_piece].remove(current)
+        return black_pieces, white_pieces
     
 
-    def possible_moves(self, player):
-        moves = []
-        if player == 'white':
-            for piece in self.white:
-                for move in piece.moves(self.board):
-                    cell = self.board[move[0]][move[1]]
-                    if not cell:
-                        moves.append((piece.position, move))
-                    elif cell.color == 'black':
-                        moves.append((piece.position, move))
-        elif player == 'black':
-            for piece in self.black:
-                for move in piece.moves(self.board):
-                    cell = self.board[move[0]][move[1]]
-                    if not cell:
-                        moves.append((piece.position, move))
-                    elif cell.color == 'white':
-                        moves.append((piece.position, move))
-        return moves
-    
-
-    def make_move(self, move):
-        board = self.board.copy()
-        start = move[0]
-        end = move[1]
-        piece = board[start[0]][start[1]]
-        piece.position = end
-        if board[end[0]][end[1]]:
-            opponent_piece = board[end[0]][end[1]]
-            opponent_piece.position = None
-            color = opponent_piece.color
-            if color == 'white':
-                self.white.remove(opponent_piece)
-            elif color == 'black':
-                self.black.remove(opponent_piece)
-        board[end[0]][end[1]] = piece
-        board[start[0]][start[1]] = None
-        return board
-
-    
-    def evaluate(self, board):
+    def evaluate(self, black_pieces, white_pieces):
         value = 0
-        for row in board:
-            for cell in row:
-                if cell:
-                    if cell.color == 'white':
-                        value += cell.value
-                    elif cell.color =='black':
-                        value -= cell.value
+        worth = {
+            pawn: 1,
+            rook: 5,
+            knight: 3,
+            bishop: 3,
+            queen: 9,
+            king: 0,
+        }
+        for piece, positions in black_pieces.items():
+            value += worth[piece] * len(positions)
+        for piece, positions in white_pieces.items():
+            value -= worth[piece] * len(positions)
         return value
-    
 
-    def has_won(self, board):
-        white_king = False
-        black_king = False
-        for piece in self.white:
-            if type(piece).__name__ == 'King':
-                white_king = True
-        
-        for piece in self.black:
-            if type(piece).__name__ == 'King':
-                black_king = True
-        
-        if not black_king:
-            return 'white'
-        elif not white_king:
-            return 'black'
+    
+    def has_won(self, black_pieces, white_pieces):
+        if not black_pieces[king]:
+            return white
+        elif not white_pieces[king]:
+            return black
         else:
             return None
-
     
-    def translate(self, move):
-        pass
-
-
-    def print_board(self, board):
-        letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+    def print_board(self):
+        symbols = {
+            f'{black}_{pawn}': '♟',
+            f'{black}_{rook}': '♜',
+            f'{black}_{knight}': '♞',
+            f'{black}_{bishop}': '♝',
+            f'{black}_{queen}': '♛',
+            f'{black}_{king}': '♚',
+            f'{white}_{pawn}': '♙',
+            f'{white}_{rook}': '♖',
+            f'{white}_{knight}': '♘',
+            f'{white}_{bishop}': '♗',
+            f'{white}_{queen}': '♕',
+            f'{white}_{king}': '♔',
+        }
+        board = self._generate_board(self._black_pieces, self._white_pieces)
+        letters = ['0', '1', '2', '3', '4', '5', '6', '7']
         print(' ', end='')
         for letter in letters:
             print(f' {letter} ', end='')
         print()
-        for row in range(self.height):
+        print(board)
+        for index, row in enumerate(board):
             print("----" * self.width)
-            print(row + 1, end='')
-            for col in range(self.width):
-                cell = board[row][col]
+            print(index, end='')
+            for cell in row:
                 if cell:
-                    print(f"|{cell.symbol} ", end='')
+                    print(f"|{symbols[cell]} ", end='')
                 else:
                     print("|  ", end='')
             print("|", end='')
-            print(row + 1)
-        print(' ', end='')
+            print(index)
         for letter in letters:
             print(f' {letter} ', end='')
         print()
+                    
 
-'''
-import random
+    def _generate_board(self, black_pieces, white_pieces):
+        board = []
+        for i in range(self.height):
+            row = []
+            for i in range(self.width):
+                row.append(None)
+            board.append(row)
 
+        for piece, positions in black_pieces.items():
+            for position in positions:
+                board[position[0]][position[1]] = f'{black}_{piece}'
+        for piece, positions in white_pieces.items():
+            for position in positions:
+                board[position[0]][position[1]] = f'{white}_{piece}'
+        return board
+
+
+    def _set_positions(self, move):
+        black_pieces, white_pieces = self.make_move(move, self._black_pieces, self._white_pieces)
+        self._black_pieces = black_pieces
+        self._white_pieces = white_pieces
+    
+
+    def _evaluate(self):
+        return self.evaluate(self._black_pieces, self._white_pieces)
+    
+
+    def _has_won(self):
+        return self.has_won(self._black_pieces, self._white_pieces)
+    
+    
 board = ChessBoard()
-board.print_board(board.board)
-board.possible_moves('black')
-print(board.has_won(board.board))
-
-
-for i in range(300):
-    if i % 2 == 0:
-        move = random.choice(board.possible_moves('white'))
-    else:
-        move = random.choice(board.possible_moves('black'))
-    new_board = board.make_move(move)
-    board.print_board(new_board)
-    value = board.evaluate(new_board)
-    print(board.has_won(new_board))
-    print(f'Move {move} caused the board to be worth {value}')'''
+board.print_board()
+'''
+board._set_positions(((0, 4), (7, 5)))
+print(board.black_pieces)
+print(board.white_pieces)'''
