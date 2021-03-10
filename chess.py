@@ -1,4 +1,4 @@
-from piece import ChessPiece
+from chessMove import ChessMove
 
 black = 'black'
 white = 'white'
@@ -42,7 +42,7 @@ class ChessBoard():
         'black_king': {(0, 4)},
     }
 
-    def __init__(self, height=8, width=8, dict=start_arrangement):
+    def __init__(self, height=8, width=8, dict=start_arrangement2):
         self.height = height
         self.width= width
         self._black_pieces = {}
@@ -62,14 +62,26 @@ class ChessBoard():
             elif color == white:
                 self._white_pieces[chessman] = value
     
-    '''
-    def possible_moves(self, player, white_pieces, black_pieces):
-        all_moves = []
-        if player == white:
-            for piece, positions in white_pieces:
-                for position in positions:
-                    moves = ChessPiece().move(player, piece, white_pieces, black_pieces)'''
 
+    def possible_moves(self, player, black_pieces, white_pieces):
+        all_moves = []
+        chess_move = ChessMove(self.height, self.width, player, black_pieces, white_pieces)
+        if player == white:
+            for piece, positions in white_pieces.items():
+                for position in positions:
+                    moves = chess_move.moves(piece, position)
+                    if moves:
+                        for move in moves:
+                            all_moves.append((position, move))
+        elif player == black:
+            for piece, positions in black_pieces.items():
+                for position in positions:
+                    moves = chess_move.moves(piece, position)
+                    if moves:
+                        for move in moves:
+                            all_moves.append((position, move))
+        return all_moves
+                    
 
     def make_move(self, move, black_pieces, white_pieces):
         previous = move[0]
@@ -136,7 +148,6 @@ class ChessBoard():
         for letter in letters:
             print(f' {letter} ', end='')
         print()
-        print(board)
         for index, row in enumerate(board):
             print("----" * self.width)
             print(index, end='')
@@ -147,6 +158,7 @@ class ChessBoard():
                     print("|  ", end='')
             print("|", end='')
             print(index)
+        print(' ', end='')
         for letter in letters:
             print(f' {letter} ', end='')
         print()
@@ -185,6 +197,7 @@ class ChessBoard():
     
 board = ChessBoard()
 board.print_board()
+board.possible_moves(white, board._black_pieces, board._white_pieces)
 '''
 board._set_positions(((0, 4), (7, 5)))
 print(board.black_pieces)
