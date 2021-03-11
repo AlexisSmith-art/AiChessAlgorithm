@@ -48,13 +48,11 @@ class ChessAI(ChessBoard):
             print(script_player_error)
             response = input()
         player = response
-        ai = black if response == white else black
+        ai = black if response == white else white
+        print(f'player is: {player}, ai is: {ai}')
         self.print_board()
 
-
         while True:
-            if self._has_won():
-                break
             #print(script_move)
             possible_moves = self.possible_moves(player, self._black_pieces, self._white_pieces)
             #for index, move in enumerate(possible_moves):
@@ -64,14 +62,25 @@ class ChessAI(ChessBoard):
             #    print(script_move_error)
             #    response = input()
             player_move = random.choice(possible_moves)
+
+            self.print_board()
+            black_pieces, white_pieces = self.make_move(player_move, self._black_pieces, self._white_pieces)
+            value = self.evaluate(black_pieces, white_pieces)
+            print(f'{player} {player_move} has a value of {value}')
             self._set_positions(player_move)
+
+            self.print_board()
             ai_move = self.__best_move(self._black_pieces, self._white_pieces, 3, ai)
             self._set_positions(ai_move)
-            self.print_board()
+
+            if self._has_won():
+                break
         
+        self.print_board()
         print(f'The winner is: {self._has_won()}')
 
-    def __minimax(self, black_pieces, white_pieces, depth, player):
+    # depth-limited minimax with alpha-beta pruning
+    def __minimax(self, black_pieces, white_pieces, depth, alpha, beta, player):
         black_pieces = copy.deepcopy(black_pieces)
         white_pieces = copy.deepcopy(white_pieces)
         if depth == 0 or self.has_won(black_pieces, white_pieces):
@@ -81,13 +90,19 @@ class ChessAI(ChessBoard):
             value = -math.inf
             for move in self.possible_moves(player, black_pieces, white_pieces):
                 new_black, new_white = self.make_move(move, black_pieces, white_pieces)
-                value = max(value, self.__minimax(new_black, new_white, depth-1, white))
+                value = max(alpha, self.__minimax(new_black, new_white, depth-1, alpha, beta, white))
+                alpha = max(alpha, value)
+                if alpha >= beta:
+                    break
             return value
         elif player == white:
             value = math.inf
             for move in self.possible_moves(player, black_pieces, white_pieces):
                 new_black, new_white = self.make_move(move, black_pieces, white_pieces)
-                value = min(value, self.__minimax(new_black, new_white, depth-1, black))
+                value = min(value, self.__minimax(new_black, new_white, depth-1, alpha, beta, black))
+                beta = min(beta, value)
+                if beta <= alpha:
+                    break
             return value
     
     def __best_move(self, black_pieces, white_pieces, depth, player):
@@ -98,7 +113,7 @@ class ChessAI(ChessBoard):
             value = -math.inf
             for move in self.possible_moves(player, black_pieces, white_pieces):
                 new_black, new_white = self.make_move(move, black_pieces, white_pieces)
-                new_value = max(value, self.__minimax(new_black, new_white, depth, white))
+                new_value = max(value, self.__minimax(new_black, new_white, depth, -math.inf, math.inf, white))
                 if new_value > value:
                     best_moves = []
                     value = new_value
@@ -109,7 +124,7 @@ class ChessAI(ChessBoard):
             value = math.inf
             for move in self.possible_moves(player, black_pieces, white_pieces):
                 new_black, new_white = self.make_move(move, black_pieces, white_pieces)
-                new_value = min(value, self.__minimax(new_black, new_white, depth, black))
+                new_value = min(value, self.__minimax(new_black, new_white, depth, -math.inf, math.inf,black))
                 if new_value < value:
                     best_moves = []
                     value = new_value
@@ -117,7 +132,7 @@ class ChessAI(ChessBoard):
                 elif new_value == value:
                     best_moves.append(move)
         move = random.choice(best_moves)
-        print(f'Move, {move} has value of {value}')
+        print(f'{player} {move} has a value of {value}')
         return move
 
 ai = ChessAI(8, 4, test_small)

@@ -1,5 +1,8 @@
+import copy
+
 black = 'black'
 white = 'white'
+
 pawn = 'pawn'
 rook = 'rook'
 knight = 'knight'
@@ -8,28 +11,11 @@ queen = 'queen'
 king = 'king'
 
 class ChessMove():
-    def __init__(self, height, width, color, black_pieces, white_pieces):
-        self.height = height
-        self.width = width
+    def __init__(self, color, same_pieces, diff_pieces, board):
         self.color = color
-        self.black_positions = set()
-        self.white_positions = set()
-
-        for positions in black_pieces.values():
-            self.black_positions.update(positions)
-        
-        for positions in white_pieces.values():
-            self.white_positions.update(positions)
-        
-        self.positions = {
-            black: self.black_positions,
-            white: self.white_positions,
-        }
-
-        self.opposings = {
-            black: self.white_positions,
-            white: self.black_positions
-        }
+        self.same_pieces = copy.deepcopy(same_pieces)
+        self.diff_pieces = copy.deepcopy(diff_pieces)
+        self.board = board
 
 
     def moves(self, piece, position):
@@ -45,27 +31,27 @@ class ChessMove():
             return self._queen_moves(position)
         if piece == king:
             return self._king_moves(position)
-
+    
 
     def _pawn_moves(self, position):
         moves = []
 
         # Standard move
         move = self._math(position, 1)
-        if move not in self.black_positions | self.white_positions:
+        if move not in self.same_pieces[self.color] | self.diff_pieces[self.color]:
             moves.append(move)
         
         # Starting move
         move = self._math(position, 2)
         block = self._math(position, 1)
         if (self.color == white and position[0] == 6) or (self.color == black and position[0] == 1):
-            if (move and block) not in self.black_positions | self.white_positions:
+            if (move and block) not in self.same_pieces[self.color] | self.diff_pieces[self.color]:
                 moves.append(move)
 
         # Capturing move
         positions = [self._math(position, 1, 1), self._math(position, 1, -1)]
         for move in positions:
-            if move in self.opposings[self.color] and self._in_board(move):
+            if move in self.diff_pieces[self.color] and move in self.board:
                 moves.append(move)
 
         # print(self.color, ' Pawn @ ', position, ': ', moves)
@@ -81,11 +67,11 @@ class ChessMove():
             x = position
             while True:
                 move = self._math(x, p[0], p[1])
-                if not self._in_board(move):
+                if move not in self.board:
                     break
-                if move in self.positions[self.color]:
+                if move in self.same_pieces[self.color]:
                     break
-                elif move in self.opposings[self.color]:
+                elif move in self.diff_pieces[self.color]:
                     moves.append(move)
                     break
                 else:
@@ -94,7 +80,6 @@ class ChessMove():
 
         # print(self.color, ' Rook @ ', position, ': ', moves)
         return moves
-    
     
     def _knight_moves(self, position):
         moves = []
@@ -113,15 +98,14 @@ class ChessMove():
         
         # Filter for moves that overlaps with own pieces.
         for move in possible_moves:
-            if not self._in_board(move):
+            if move not in self.board:
                 continue
-            if move not in self.black_positions | self.white_positions or move not in self.positions[self.color]:
+            if move not in self.same_pieces[self.color]:
                 moves.append(move)
 
         # print(self.color, ' Knight @ ', position, ': ', moves)
         return moves
     
-
     def _bishop_moves(self, position):
         moves = []
         increments = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
@@ -131,11 +115,11 @@ class ChessMove():
             x = position
             while True:
                 move = self._math(x, p[0], p[1])
-                if not self._in_board(move):
+                if move not in self.board:
                     break
-                if move in self.positions[self.color]:
+                if move in self.same_pieces[self.color]:
                     break
-                elif move in self.opposings[self.color]:
+                elif move in self.diff_pieces[self.color]:
                     moves.append(move)
                     break
                 else:
@@ -144,8 +128,7 @@ class ChessMove():
         
         # print(self.color, ' Bishop @ ', position, ': ', moves)
         return moves
-
-
+    
     def _queen_moves(self, position):
         moves = []
         increments = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
@@ -155,11 +138,11 @@ class ChessMove():
             x = position
             while True:
                 move = self._math(x, p[0], p[1])
-                if not self._in_board(move):
+                if move not in self.board:
                     break
-                if move in self.positions[self.color]:
+                if move in self.same_pieces[self.color]:
                     break
-                elif move in self.opposings[self.color]:
+                elif move in self.diff_pieces[self.color]:
                     moves.append(move)
                     break
                 else:
@@ -168,8 +151,7 @@ class ChessMove():
         
         # print(self.color, ' Queen @ ', position, ': ', moves)
         return moves
-
-
+    
     def _king_moves(self, position):
         moves = []
 
@@ -187,9 +169,9 @@ class ChessMove():
 
         # Filter for moves that overlaps with own pieces.
         for move in possible_moves:
-            if not self._in_board(move):
+            if move not in self.board:
                 continue
-            if move not in self.black_positions | self.white_positions or move not in self.positions[self.color]:
+            if move not in self.same_pieces[self.color]:
                 moves.append(move)
         
         # print(self.color, ' King @ ', position, ': ', moves)
@@ -200,8 +182,3 @@ class ChessMove():
             return((cell[0]-x, cell[1]+y))
         elif self.color == black:
             return((cell[0]+x, cell[1]-y))
-    
-    def _in_board(self, move):
-        if 0 <= move[0] < self.height and 0 <= move[1] < self.width:
-            return True
-        return False     
