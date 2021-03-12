@@ -11,10 +11,8 @@ queen = 'queen'
 king = 'king'
 
 class ChessMove():
-    def __init__(self, color, same_pieces, diff_pieces, board):
+    def __init__(self, color, board):
         self.color = color
-        self.same_pieces = copy.deepcopy(same_pieces)
-        self.diff_pieces = copy.deepcopy(diff_pieces)
         self.board = board
 
 
@@ -38,21 +36,22 @@ class ChessMove():
 
         # Standard move
         move = self._math(position, 1)
-        if move not in self.same_pieces[self.color] | self.diff_pieces[self.color]:
-            moves.append(move)
+        if not self.board[move]:
+            moves.append((position, move))
         
         # Starting move
+        block = move
         move = self._math(position, 2)
-        block = self._math(position, 1)
         if (self.color == white and position[0] == 6) or (self.color == black and position[0] == 1):
-            if (move and block) not in self.same_pieces[self.color] | self.diff_pieces[self.color]:
-                moves.append(move)
+            if not self.board[move] and not self.board[block]:
+                moves.append((position, move))
 
         # Capturing move
         positions = [self._math(position, 1, 1), self._math(position, 1, -1)]
         for move in positions:
-            if move in self.diff_pieces[self.color] and move in self.board:
-                moves.append(move)
+            if move in self.board:
+                if self.board[move] and self.board[move]['color'] != self.color:
+                    moves.append((position, move))
 
         # print(self.color, ' Pawn @ ', position, ': ', moves)
         return moves
@@ -69,13 +68,13 @@ class ChessMove():
                 move = self._math(x, p[0], p[1])
                 if move not in self.board:
                     break
-                if move in self.same_pieces[self.color]:
+                if self.board[move] and self.board[move]['color'] == self.color:
                     break
-                elif move in self.diff_pieces[self.color]:
-                    moves.append(move)
+                elif self.board[move] and self.board[move]['color'] != self.color:
+                    moves.append((position, move))
                     break
                 else:
-                    moves.append(move)
+                    moves.append((position, move))
                     x = move
 
         # print(self.color, ' Rook @ ', position, ': ', moves)
@@ -100,8 +99,10 @@ class ChessMove():
         for move in possible_moves:
             if move not in self.board:
                 continue
-            if move not in self.same_pieces[self.color]:
-                moves.append(move)
+            if not self.board[move]:
+                moves.append((position, move))
+            elif self.board[move]['color'] != self.color:
+                moves.append((position, move))
 
         # print(self.color, ' Knight @ ', position, ': ', moves)
         return moves
@@ -117,13 +118,13 @@ class ChessMove():
                 move = self._math(x, p[0], p[1])
                 if move not in self.board:
                     break
-                if move in self.same_pieces[self.color]:
+                if self.board[move] and self.board[move]['color'] == self.color:
                     break
-                elif move in self.diff_pieces[self.color]:
-                    moves.append(move)
+                elif self.board[move] and self.board[move]['color'] != self.color:
+                    moves.append((position, move))
                     break
                 else:
-                    moves.append(move)
+                    moves.append((position, move))
                     x = move
         
         # print(self.color, ' Bishop @ ', position, ': ', moves)
@@ -140,13 +141,13 @@ class ChessMove():
                 move = self._math(x, p[0], p[1])
                 if move not in self.board:
                     break
-                if move in self.same_pieces[self.color]:
+                if self.board[move] and self.board[move]['color'] == self.color:
                     break
-                elif move in self.diff_pieces[self.color]:
-                    moves.append(move)
+                elif self.board[move] and self.board[move]['color'] != self.color:
+                    moves.append((position, move))
                     break
                 else:
-                    moves.append(move)
+                    moves.append((position, move))
                     x = move
         
         # print(self.color, ' Queen @ ', position, ': ', moves)
@@ -171,8 +172,10 @@ class ChessMove():
         for move in possible_moves:
             if move not in self.board:
                 continue
-            if move not in self.same_pieces[self.color]:
-                moves.append(move)
+            if not self.board[move]:
+                moves.append((position, move))
+            elif self.board[move]['color'] != self.color:
+                moves.append((position, move))
         
         # print(self.color, ' King @ ', position, ': ', moves)
         return moves
