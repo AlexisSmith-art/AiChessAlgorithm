@@ -56,14 +56,17 @@ class ChessBoard():
     }
 
     def __init__(self, height=8, width=8, dict=start_arrangement):
+        if height > 8 or height < 1 or width > 8 or width < 1:
+            print('Height and width must be an integer between 1-8, inclusive.')
+
         self.height = height
         self.width = width
 
         # Used to quickly locate information about a piece.
         self.board = {}
         # Used to save all possible moves at any given moment.
-        self.black_moves = set()
-        self.white_moves = set()
+        self.black_moves = {}
+        self.white_moves = {}
         self.same_moves = {
             black: self.black_moves,
             white: self.white_moves,
@@ -77,10 +80,10 @@ class ChessBoard():
         black_pieces = set()
         white_pieces = set()
         for piece, positions in dict.items():
-            for position in positions:
+            for index, position in enumerate(positions):
                 self.board[position] = {}
                 color, name = piece.split('_')
-                self.board[position]['name'] = name
+                self.board[position]['name'] = name + str(index)
                 self.board[position]['color'] = color
                 if color == black:
                     black_pieces.add(position)
@@ -96,13 +99,13 @@ class ChessBoard():
         for point in black_pieces:
             piece = self.board[point]
             name = piece['name']
-            self.black_moves.update(chess_move.moves(name, point))
+            self.black_moves[name] = chess_move.moves(name[:-1], point)
         
         chess_move = ChessMove(white, self.board)
         for point in white_pieces:
             piece = self.board[point]
             name = piece['name']
-            self.white_moves.update(chess_move.moves(name, point))
+            self.white_moves[name] = chess_move.moves(name[:-1], point)
 
 
     # TODO Adjusts all the stored class variables after a move. Returns nothing. Still need to smartly update the moves of the moved piece as well as all affected pieces.
@@ -126,24 +129,6 @@ class ChessBoard():
         self.board[previous] = None
 
 
-    def adjacent_squares(self, color, position):
-        squares = []
-        increments = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
-
-        chess_move = ChessMove
-
-        possible_squares = [
-            ChessMove(color=color)._math(position, 2, 1),
-            ChessMove(color=color)._math(position, 1, 2),
-            ChessMove(color=color)._math(position, -1, 2),
-            ChessMove(color=color)._math(position, -2, 1),
-            ChessMove(color=color)._math(position, -2, -1),
-            ChessMove(color=color)._math(position, -1, -2),
-            ChessMove(color=color)._math(position, 1, -2),
-            ChessMove(color=color)._math(position, 2, -1),
-            ]
-
-
     # TODO Returns the result of making a move. Very similiar to _adjust_positions. Does not change the stored class variables. For use in minimax. Must return a new set of all possible moves (for next loop in the recursion)
     def adjust_positions(self, move, black_moves, white_moves, board):
         previous_position = move[0]
@@ -158,12 +143,14 @@ class ChessBoard():
 
         # Remove all moves belonging to the piece that moved.
         color = board[previous_position]['color']
-        same_moves[color] = {move for move in same_moves[color] if move[0] != previous_position}
+        name = board[previous_position]['name']
+        same_moves[color][name].clear()
 
         # If a piece was at the new square, remove all moves with that piece.
         if board[new_position]:
             color = board[new_position]['color']
-            same_moves[color] = {move for move in same_moves[color] if move[0] != new_position}
+            name = board[new_position]['name']
+            same_moves[color][name].clear()
 
         # Change the board so that the piece moves to a new location.
         info = board[previous_position]
@@ -171,8 +158,15 @@ class ChessBoard():
         board[previous_position] = None
 
         # Remove all moves affected by the new location. Perhaps it is easiest find all the pieces that are 'close' to the moved piece before proceeding.
-        color = board[new_position['color']]
-        squares = self.adjacent_squares(color, new_position)
+        color = board[new_position]['color']
+        chess_move = ChessMove(color, board)
+        squares = chess_move.occupied_squares(new_position)
+        for square in squares:
+            name = square[0]
+            position = square[1]
+            color = board[position]['color']
+            same_moves[color][name].clear()
+            # TODO redo the moveset of the cleared moves
         
 
         # Check for adjacent pawns
@@ -226,7 +220,7 @@ class ChessBoard():
             print(index, end='')
             for cell in row:
                 if cell:
-                    print(f'|{symbols[cell]} ', end='')
+                    print(f'|{symbols[cell[:-1]]} ', end='')
                 else:
                     print('|  ', end='')
             print(f'|{index}')
@@ -238,6 +232,8 @@ class ChessBoard():
         
         
         
-'''
+
 chess_board = ChessBoard()
-chess_board.print_board()'''
+chess_board.print_board()
+pp.pprint(chess_board.black_moves)
+pp.pprint(chess_board.white_moves)
