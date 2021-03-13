@@ -1,6 +1,7 @@
 import pprint as pp
 from chessMove import ChessMove
 import copy
+import random
 
 black = 'black'
 white = 'white'
@@ -76,7 +77,6 @@ class ChessBoard():
             white: self.black_moves,
         }
 
-
         black_pieces = set()
         white_pieces = set()
         for piece, positions in dict.items():
@@ -108,28 +108,12 @@ class ChessBoard():
             self.white_moves[name] = chess_move.moves(name[:-1], point)
 
 
-    # TODO Adjusts all the stored class variables after a move. Returns nothing. Still need to smartly update the moves of the moved piece as well as all affected pieces.
+    # Adjusts all the stored class variables after a move. Returns nothing.
     def _adjust_positions(self, choice):
-        previous = choice[0]
-        new = choice[1]
-        name = self.board[previous]['name']
-        color = self.board[previous]['color']
-
-        # Updates self.all_moves
-        for move in copy.deepcopy(self.same_moves[color]):
-            if move[0] == previous:
-                self.same_moves[color].remove(move)
-        chess_move = ChessMove(color, self.board)
-        self.same_moves[color].update(chess_move.moves(name, new))
-
-        # Updates self.board
-        info = self.board[previous]
-        piece_present = copy.deepcopy(self.board[new])
-        self.board[new] = info
-        self.board[previous] = None
+        self.black_moves, self.white_moves, self.board = self.adjust_positions(choice, self.black_moves, self.white_moves, self.board)
 
 
-    # TODO Returns the result of making a move. Very similiar to _adjust_positions. Does not change the stored class variables. For use in minimax. Must return a new set of all possible moves (for next loop in the recursion)
+    # Returns the result of making a move. Does not change the stored class variables. For use in minimax. Must return a new set of moves and updated board (for next loop in the recursion)
     def adjust_positions(self, move, black_moves, white_moves, board):
         previous_position = move[0]
         new_position = move[1]
@@ -146,35 +130,34 @@ class ChessBoard():
         name = board[previous_position]['name']
         same_moves[color][name].clear()
 
-        # If a piece was at the new square, remove all moves with that piece.
+        # If a piece was at the new square, remove that piece from the moves dictionary.
         if board[new_position]:
             color = board[new_position]['color']
             name = board[new_position]['name']
-            same_moves[color][name].clear()
+            same_moves[color].pop(name)
 
         # Change the board so that the piece moves to a new location.
         info = board[previous_position]
         board[new_position] = info
         board[previous_position] = None
 
-        # Remove all moves affected by the new location. Perhaps it is easiest find all the pieces that are 'close' to the moved piece before proceeding.
+        # Add new moves for the moved piece.
         color = board[new_position]['color']
+        name = board[new_position]['name']
         chess_move = ChessMove(color, board)
+        same_moves[color][name].update(chess_move.moves(name[:-1], new_position))
+
+        # Clear all moves of pieces affected by the move, and then add the updated moves.
         squares = chess_move.occupied_squares(new_position)
         for square in squares:
             name = square[0]
             position = square[1]
             color = board[position]['color']
             same_moves[color][name].clear()
-            # TODO redo the moveset of the cleared moves
+            chess_move.color = color
+            same_moves[color][name].update(chess_move.moves(name[:-1], position))
         
-
-        # Check for adjacent pawns
-
-        # Add new moves that can be made.
-        
-        # Find all other squares affected by the new location and check if a piece is there. If so, adjust the set of moves accordingly.
-
+        return black_moves, white_moves, board
 
 
     # TODO check if the board is in checkmate or check
@@ -189,17 +172,10 @@ class ChessBoard():
             if info:
                 color = info['color']
                 if color == black:
-                    value += worth[info['name']]
+                    value += worth[info['name'][:-1]]
                 elif color == white:
-                    value -= worth[info['name']]
+                    value -= worth[info['name'][:-1]]
         return value
- 
-
-    # TODO this function should NOT redo all possible moves every time a new board is present.
-    # A change of one move, does not greatly change the moves possible.
-    # This function should never adjust it's variables, but make copies of them.
-    def possible_moves(self, player, black_pieces, white_pieces):
-        raise NotImplementedError
 
 
     # Prints the current board.
@@ -232,8 +208,17 @@ class ChessBoard():
         
         
         
-
+'''
 chess_board = ChessBoard()
 chess_board.print_board()
 pp.pprint(chess_board.black_moves)
 pp.pprint(chess_board.white_moves)
+all_white_moves = []
+for moves in chess_board.white_moves.values():
+    all_white_moves.extend(moves)
+move = random.choice(all_white_moves)
+black_moves, white_moves, board = chess_board.adjust_positions(move, chess_board.black_moves, chess_board.white_moves, chess_board.board)
+chess_board.board = board
+chess_board.print_board()
+pp.pprint(black_moves)
+pp.pprint(white_moves)'''

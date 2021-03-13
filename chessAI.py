@@ -80,26 +80,30 @@ class ChessAI(ChessBoard):
         print(f'The winner is: {self._has_won()}')
 
     # depth-limited minimax with alpha-beta pruning
-    def minimax(self, black_pieces, white_pieces, depth, alpha, beta, player):
-        black_pieces = copy.deepcopy(black_pieces)
-        white_pieces = copy.deepcopy(white_pieces)
+    def minimax(self, black_moves, white_moves, board, depth, alpha, beta, player):
         if depth == 0 or self.has_won(black_pieces, white_pieces):
             return self.evaluate(black_pieces, white_pieces)
         
         if player == black:
             value = -math.inf
-            for move in self.possible_moves(player, black_pieces, white_pieces):
-                new_black, new_white = self.make_move(move, black_pieces, white_pieces)
-                value = max(alpha, self.minimax(new_black, new_white, depth-1, alpha, beta, white))
+            all_black_moves = set()
+            for moves in black_moves.values():
+                all_black_moves.update(moves)
+            for move in all_black_moves:
+                new_black, new_white, new_board = self.adjust_positions(move, black_moves, white_moves, self.board)
+                value = max(alpha, self.minimax(new_black, new_white, new_board, depth-1, alpha, beta, white))
                 alpha = max(alpha, value)
                 if alpha >= beta:
                     break
             return value
         elif player == white:
             value = math.inf
-            for move in self.possible_moves(player, black_pieces, white_pieces):
-                new_black, new_white = self.make_move(move, black_pieces, white_pieces)
-                value = min(value, self.minimax(new_black, new_white, depth-1, alpha, beta, black))
+            all_white_moves = set()
+            for moves in white_moves.values():
+                all_white_moves.update(moves)
+            for move in all_white_moves:
+                new_black, new_white, new_board = self.adjust_positions(move, black_moves, white_moves, self.board)
+                value = min(value, self.minimax(new_black, new_white, new_board, depth-1, alpha, beta, black))
                 beta = min(beta, value)
                 if beta <= alpha:
                     break
@@ -109,9 +113,12 @@ class ChessAI(ChessBoard):
         best_moves = []
         if player == black:
             value = -math.inf
-            for move in copy.deepcopy(self.black_moves):
-                new_black, new_white = self.adjust_positions(move, self.black_moves, self.white_moves, self.board)
-                new_value = max(value, self.minimax(new_black, new_white, depth, -math.inf, math.inf, white))
+            all_black_moves = set()
+            for moves in self.black_moves.values():
+                all_black_moves.update(moves)
+            for move in all_black_moves:
+                new_black, new_white, new_board = self.adjust_positions(move, self.black_moves, self.white_moves, self.board)
+                new_value = max(value, self.minimax(new_black, new_white, new_board, depth, -math.inf, math.inf, white))
                 if new_value > value:
                     best_moves = []
                     value = new_value
@@ -120,9 +127,12 @@ class ChessAI(ChessBoard):
                     best_moves.append(move)
         elif player == white:
             value = math.inf
-            for move in copy.deepcopy(self.white_moves):
-                new_black, new_white = self.make_move(move, black_pieces, white_pieces)
-                new_value = min(value, self.minimax(new_black, new_white, depth, -math.inf, math.inf,black))
+            all_white_moves = set()
+            for moves in self.white_moves.values():
+                all_white_moves.update(moves)
+            for move in all_white_moves:
+                new_black, new_white, new_board = self.adjust_positions(move, self.black_moves, self. white_moves, self.board)
+                new_value = min(value, self.minimax(new_black, new_white, new_board, depth, -math.inf, math.inf, black))
                 if new_value < value:
                     best_moves = []
                     value = new_value

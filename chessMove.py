@@ -45,6 +45,8 @@ class ChessMove():
                     name = self.board[square]['name']
                     squares.add((name, square))
                     break
+                else:
+                    x = square
 
         possible_squares = [
             self._math(position, 2, 1),
@@ -58,6 +60,8 @@ class ChessMove():
         ]
 
         for square in possible_squares:
+            if square not in self.board:
+                continue
             if self.board[square]:
                 name = self.board[square]['name']
                 squares.add((name, square))
