@@ -19,7 +19,7 @@ worth = {
     knight: 3,
     bishop: 3,
     queen: 9,
-    king: 0,
+    king: 30,
 }
 
 symbols = {
@@ -68,14 +68,6 @@ class ChessBoard():
         # Used to save all possible moves at any given moment.
         self.black_moves = {}
         self.white_moves = {}
-        self.same_moves = {
-            black: self.black_moves,
-            white: self.white_moves,
-        }
-        self.diff_moves = {
-            black: self.white_moves,
-            white: self.black_moves,
-        }
 
         black_pieces = set()
         white_pieces = set()
@@ -113,13 +105,13 @@ class ChessBoard():
         self.black_moves, self.white_moves, self.board = self.adjust_positions(choice, self.black_moves, self.white_moves, self.board)
 
 
-    # Returns the result of making a move. Does not change the stored class variables. For use in minimax. Must return a new set of moves and updated board (for next loop in the recursion)
+    # Returns a new set of moves and updated board as a result of a move. Does not change the stored class variables. For use in minimax.
     def adjust_positions(self, move, black_moves, white_moves, board):
         previous_position = move[0]
         new_position = move[1]
-        board = copy.deepcopy(board)
         black_moves = copy.deepcopy(black_moves)
         white_moves = copy.deepcopy(white_moves)
+        board = copy.deepcopy(board)
         same_moves = {
             black: black_moves,
             white: white_moves,
@@ -166,6 +158,7 @@ class ChessBoard():
 
 
     # Returns the value of a given board. Currently needs to smartly consider checks and checkmates. For use in minimax.
+    # Need to be a lot more effective by not skipping moves that leads to sure wins.
     def evaluate(self, board):
         value = 0
         for info in board.values():
@@ -176,6 +169,16 @@ class ChessBoard():
                 elif color == white:
                     value -= worth[info['name'][:-1]]
         return value
+    
+
+    # Returns the player that won if there is one, otherwise None. For use in minimax. 
+    def has_won(self, black_moves, white_moves):
+        if 'king0' not in white_moves:
+            return black
+        elif 'king0' not in black_moves:
+            return white
+        else:
+            return None
 
 
     # Prints the current board.

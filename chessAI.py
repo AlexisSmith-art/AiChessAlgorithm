@@ -50,11 +50,19 @@ class ChessAI(ChessBoard):
         player = response
         ai = black if response == white else white
         print(f'player is: {player}, ai is: {ai}')
-        self.print_board()
 
+        counter = 0
         while True:
+            counter += 1
+            if player == black:
+                possible_moves = []
+                for moves in self.black_moves.values():
+                    possible_moves.extend(moves)
+            elif player == white:
+                possible_moves = []
+                for moves in self.white_moves.values():
+                    possible_moves.extend(moves)
             #print(script_move)
-            possible_moves = self.possible_moves(player, self._black_pieces, self._white_pieces)
             #for index, move in enumerate(possible_moves):
             #    print(f'Move {index}: {move}')
             #response = '15'
@@ -64,33 +72,37 @@ class ChessAI(ChessBoard):
             player_move = random.choice(possible_moves)
 
             self.print_board()
-            black_pieces, white_pieces = self.make_move(player_move, self._black_pieces, self._white_pieces)
-            value = self.evaluate(black_pieces, white_pieces)
+            self._adjust_positions(player_move)
+            value = self.evaluate(self.board)
             print(f'{player} {player_move} has a value of {value}')
-            self._set_positions(player_move)
+
+            if self.has_won(self.black_moves, self.white_moves):
+                break
 
             self.print_board()
-            ai_move = self.best_move(self._black_pieces, self._white_pieces, 3, ai)
-            self._set_positions(ai_move)
+            ai_move = self.best_move(1, ai)
+            self._adjust_positions(ai_move)
+            value = self.evaluate(self.board)
+            print(f'{ai} {ai_move} has a value of {value}')
 
-            if self._has_won():
+            if self.has_won(self.black_moves, self.white_moves):
                 break
         
         self.print_board()
-        print(f'The winner is: {self._has_won()}')
+        print(f'The winner is: {self.has_won(self.black_moves, self.white_moves)} in {counter} moves')
 
     # depth-limited minimax with alpha-beta pruning
     def minimax(self, black_moves, white_moves, board, depth, alpha, beta, player):
-        if depth == 0 or self.has_won(black_pieces, white_pieces):
-            return self.evaluate(black_pieces, white_pieces)
+        if depth == 0 or self.has_won(black_moves, white_moves):
+            return self.evaluate(board)
         
         if player == black:
             value = -math.inf
-            all_black_moves = set()
+            all_black_moves = []
             for moves in black_moves.values():
-                all_black_moves.update(moves)
+                all_black_moves.extend(moves)
             for move in all_black_moves:
-                new_black, new_white, new_board = self.adjust_positions(move, black_moves, white_moves, self.board)
+                new_black, new_white, new_board = self.adjust_positions(move, black_moves, white_moves, board)
                 value = max(alpha, self.minimax(new_black, new_white, new_board, depth-1, alpha, beta, white))
                 alpha = max(alpha, value)
                 if alpha >= beta:
@@ -98,11 +110,11 @@ class ChessAI(ChessBoard):
             return value
         elif player == white:
             value = math.inf
-            all_white_moves = set()
+            all_white_moves = []
             for moves in white_moves.values():
-                all_white_moves.update(moves)
+                all_white_moves.extend(moves)
             for move in all_white_moves:
-                new_black, new_white, new_board = self.adjust_positions(move, black_moves, white_moves, self.board)
+                new_black, new_white, new_board = self.adjust_positions(move, black_moves, white_moves, board)
                 value = min(value, self.minimax(new_black, new_white, new_board, depth-1, alpha, beta, black))
                 beta = min(beta, value)
                 if beta <= alpha:
@@ -113,9 +125,9 @@ class ChessAI(ChessBoard):
         best_moves = []
         if player == black:
             value = -math.inf
-            all_black_moves = set()
+            all_black_moves = []
             for moves in self.black_moves.values():
-                all_black_moves.update(moves)
+                all_black_moves.extend(moves)
             for move in all_black_moves:
                 new_black, new_white, new_board = self.adjust_positions(move, self.black_moves, self.white_moves, self.board)
                 new_value = max(value, self.minimax(new_black, new_white, new_board, depth, -math.inf, math.inf, white))
@@ -127,9 +139,9 @@ class ChessAI(ChessBoard):
                     best_moves.append(move)
         elif player == white:
             value = math.inf
-            all_white_moves = set()
+            all_white_moves = []
             for moves in self.white_moves.values():
-                all_white_moves.update(moves)
+                all_white_moves.extend(moves)
             for move in all_white_moves:
                 new_black, new_white, new_board = self.adjust_positions(move, self.black_moves, self. white_moves, self.board)
                 new_value = min(value, self.minimax(new_black, new_white, new_board, depth, -math.inf, math.inf, black))
@@ -140,7 +152,6 @@ class ChessAI(ChessBoard):
                 elif new_value == value:
                     best_moves.append(move)
         move = random.choice(best_moves)
-        print(f'{player} {move} has a value of {value}')
         return move
 
 ai = ChessAI(8, 4, test_small)

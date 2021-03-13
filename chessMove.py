@@ -74,7 +74,7 @@ class ChessMove():
 
         # Standard move
         move = self._math(position, 1)
-        if not self.board[move]:
+        if move in self.board and not self.board[move]:
             moves.add((position, move))
         
         # Starting move
