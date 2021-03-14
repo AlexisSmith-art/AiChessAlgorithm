@@ -1,7 +1,7 @@
 from chess import ChessBoard
 import math
 import random
-import copy
+import time
 
 black = 'black'
 white = 'white'
@@ -52,6 +52,7 @@ class ChessAI(ChessBoard):
         print(f'player is: {player}, ai is: {ai}')
 
         counter = 0
+        all_time = []
         while True:
             counter += 1
             if player == black:
@@ -78,18 +79,24 @@ class ChessAI(ChessBoard):
 
             if self.has_won(self.black_moves, self.white_moves):
                 break
-
+            
+            before = time.perf_counter()
             self.print_board()
-            ai_move = self.best_move(1, ai)
+            ai_move = self.best_move(2, ai)
             self._adjust_positions(ai_move)
             value = self.evaluate(self.board)
             print(f'{ai} {ai_move} has a value of {value}')
+            after = time.perf_counter()
+            total_time = after - before
+            all_time.append(total_time)
+            print(f'Took {total_time} seconds')
 
             if self.has_won(self.black_moves, self.white_moves):
                 break
         
         self.print_board()
         print(f'The winner is: {self.has_won(self.black_moves, self.white_moves)} in {counter} moves')
+        print(f'The ai({ai}) took an average of {sum(all_time)/len(all_time)} per turn to make a move.')
 
     # depth-limited minimax with alpha-beta pruning
     def minimax(self, black_moves, white_moves, board, depth, alpha, beta, player):

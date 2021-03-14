@@ -13,6 +13,9 @@ bishop = 'bishop'
 queen = 'queen'
 king = 'king'
 
+move_set = 'moves'
+priority = 'priority'
+
 worth = {
     pawn: 1,
     rook: 5,
@@ -56,7 +59,7 @@ class ChessBoard():
         'white_king': {(7, 4)},
     }
 
-    def __init__(self, height=8, width=8, dict=start_arrangement):
+    def __init__(self, height: int=8, width: int=8, dict=start_arrangement):
         if height > 8 or height < 1 or width > 8 or width < 1:
             print('Height and width must be an integer between 1-8, inclusive.')
 
@@ -91,13 +94,17 @@ class ChessBoard():
         for point in black_pieces:
             piece = self.board[point]
             name = piece['name']
-            self.black_moves[name] = chess_move.moves(name[:-1], point)
+            moves = chess_move.moves(name[:-1], point)
+            moves = [{move_set: move, priority: 0} for move in moves]
+            self.black_moves[name] = moves
         
         chess_move = ChessMove(white, self.board)
         for point in white_pieces:
             piece = self.board[point]
             name = piece['name']
-            self.white_moves[name] = chess_move.moves(name[:-1], point)
+            moves = chess_move.moves(name[:-1], point)
+            moves = [{move_set: move, priority: 0} for move in moves]
+            self.white_moves[name] = moves
 
 
     # Adjusts all the stored class variables after a move. Returns nothing.
@@ -117,18 +124,18 @@ class ChessBoard():
             white: white_moves,
         }
 
-        # Remove all moves belonging to the piece that moved.
+        # In moves, remove all moves belonging to the piece that moved.
         color = board[previous_position]['color']
         name = board[previous_position]['name']
         same_moves[color][name].clear()
 
-        # If a piece was at the new square, remove that piece from the moves dictionary.
+        # In moves, if a piece was at the new square, remove that piece from the dictionary.
         if board[new_position]:
             color = board[new_position]['color']
             name = board[new_position]['name']
             same_moves[color].pop(name)
 
-        # Change the board so that the piece moves to a new location.
+        # In board, change the board so that the piece moves to a new location.
         info = board[previous_position]
         board[new_position] = info
         board[previous_position] = None
@@ -137,7 +144,9 @@ class ChessBoard():
         color = board[new_position]['color']
         name = board[new_position]['name']
         chess_move = ChessMove(color, board)
-        same_moves[color][name].update(chess_move.moves(name[:-1], new_position))
+        moves = chess_move.moves(name[:-1], new_position)
+        moves = [{move_set: move, 'priority': 0} for move in moves]
+        same_moves[color][name].extend(moves)
 
         # Clear all moves of pieces affected by the move, and then add the updated moves.
         squares = chess_move.occupied_squares(new_position)
@@ -147,7 +156,9 @@ class ChessBoard():
             color = board[position]['color']
             same_moves[color][name].clear()
             chess_move.color = color
-            same_moves[color][name].update(chess_move.moves(name[:-1], position))
+            moves = chess_move.moves(name[:-1], position)
+            moves = [{move_set: move, priority: 0} for move in moves]
+            same_moves[color][name].extend(moves)
         
         return black_moves, white_moves, board
 
@@ -217,8 +228,10 @@ chess_board.print_board()
 pp.pprint(chess_board.black_moves)
 pp.pprint(chess_board.white_moves)
 all_white_moves = []
-for moves in chess_board.white_moves.values():
-    all_white_moves.extend(moves)
+for value in chess_board.white_moves.values():
+    for dict in value:
+        moves = dict[move_set]
+        all_white_moves.append(moves)
 move = random.choice(all_white_moves)
 black_moves, white_moves, board = chess_board.adjust_positions(move, chess_board.black_moves, chess_board.white_moves, chess_board.board)
 chess_board.board = board
