@@ -42,7 +42,7 @@ test_big = {
         'white_king': {(7, 4)},
     }
 
-class TestSum(unittest.TestCase):
+class TestChess(unittest.TestCase):
     def setUp(self): 
         self.board_small = ChessBoard(8, 4, dict=test_small)
         self.board_big = ChessBoard(dict=test_big)
@@ -57,16 +57,10 @@ class TestSum(unittest.TestCase):
         self.assertEqual(piece[:-1], rook, 'Piece should be rook.')
 
         black_moves = self.board_small.black_moves
-        moves = []
-        for item in black_moves['rook0']:
-            moves.append(item[move_set])
-        self.assertIn(((3, 1), (6, 1)), moves, 'rook0 31 to 61 is in black moves.')
+        self.assertIn(((3, 1), (6, 1)), black_moves['rook0'], 'rook0 31 to 61 is in black moves.')
 
         white_moves = self.board_small.white_moves
-        moves = []
-        for item in white_moves['pawn0']:
-            moves.append(item[move_set])
-        self.assertNotIn(((6, 1), (5, 2)), moves, 'pawn0 61 to 52 is not in white moves.')
+        self.assertNotIn(((6, 1), (5, 2)), white_moves['pawn0'], 'pawn0 61 to 52 is not in white moves.')
     
     def test_board_big(self):
         self.setUp()
@@ -78,15 +72,10 @@ class TestSum(unittest.TestCase):
         self.assertEqual(piece[:-1], queen, 'Piece should be queen')
 
         black_moves = self.board_big.black_moves
-        moves = []
-        for item in black_moves['bishop0']:
-            moves.append(item[move_set])
-        self.assertIn(((0, 2), (3, 5)), moves, 'bishop0 02 to 35 is in black moves.')
+        self.assertIn(((0, 2), (3, 5)), black_moves['bishop0'], 'bishop0 02 to 35 is in black moves.')
         
         white_moves = self.board_big.white_moves
-        for item in white_moves['knight1']:
-            moves.append(item[move_set])
-        self.assertNotIn(((7, 6), (6, 4)), moves, 'knight1 76 to 63 is not in white moves.')
+        self.assertNotIn(((7, 6), (6, 4)), white_moves['knight1'], 'knight1 76 to 63 is not in white moves.')
     
     def test_evaluate(self):
         self.setUp()
@@ -107,9 +96,7 @@ class TestSum(unittest.TestCase):
         self.assertIn('queen0', small_board.white_moves, "queen0 should be in white moves before the move")
         self.assertFalse(small_board.board[(4, 2)]['name']=='bishop0', "Before move, bishop0 should not be in board position 42")
 
-        moves = []
-        for item in small_board.black_moves['bishop0']:
-            moves.append(item['moves'])
+        moves = small_board.get_prioritized_moves(black)
         self.assertNotIn(((4, 2), (5, 1)), moves, "bishop0 42 to 51 is not in black moves before moving")
 
         move = ((5, 3), (4, 2))
@@ -117,9 +104,7 @@ class TestSum(unittest.TestCase):
         self.assertNotIn('queen0', small_board.white_moves, "queen0 should not be in white moves after black's bishop0 53 to 42")
         self.assertTrue(small_board.board[(4, 2)]['name']=='bishop0', "After move, bishop0 should be in board position 42")
 
-        moves = []
-        for item in small_board.black_moves['bishop0']:
-            moves.append(item['moves'])
+        moves = small_board.get_prioritized_moves(black)
         self.assertIn(((4, 2), (5, 1)), moves, "bishop0 42 to 51 is in black moves after moving")
 
 

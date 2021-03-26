@@ -13,9 +13,6 @@ bishop = 'bishop'
 queen = 'queen'
 king = 'king'
 
-move_set = 'moves'
-priority = 'priority'
-
 worth = {
     pawn: 1,
     rook: 5,
@@ -72,8 +69,14 @@ class ChessBoard():
         self.black_moves = {}
         self.white_moves = {}
 
+        # Used to store the priority of all moves.
+        self.priority = {}
+
+        # Temporary data structure to help set the above data structures.
         black_pieces = set()
         white_pieces = set()
+
+        # Sets the pieces into the board positions.
         for piece, positions in dict.items():
             for index, position in enumerate(positions):
                 self.board[position] = {}
@@ -85,35 +88,88 @@ class ChessBoard():
                 elif color == white:
                     white_pieces.add(position)
 
+        # Set empty spaces in the board.
         for row in range(self.height):
             for col in range(self.width):
                 if (row, col) not in self.board:
                     self.board[(row, col)] = None
         
+        # Calculate all moves for black pieces on the board.
         chess_move = ChessMove(black, self.board)
         for point in black_pieces:
             piece = self.board[point]
             name = piece['name']
             moves = chess_move.moves(name[:-1], point)
-            moves = [{move_set: move, priority: 0} for move in moves]
+            self.priority.update({move: 0 for move in moves})
             self.black_moves[name] = moves
         
+        # Calculate all moves for white pieces on the board.
         chess_move = ChessMove(white, self.board)
         for point in white_pieces:
             piece = self.board[point]
             name = piece['name']
             moves = chess_move.moves(name[:-1], point)
-            moves = [{move_set: move, priority: 0} for move in moves]
+            self.priority.update({move: 0 for move in moves})
             self.white_moves[name] = moves
+
+    # ////////////////////////////////////////////////////////////
+    # PRIVATE METHODS
+    # ////////////////////////////////////////////////////////////
 
 
     # Adjusts all the stored class variables after a move. Returns nothing.
     def _adjust_positions(self, choice):
         self.black_moves, self.white_moves, self.board = self.adjust_positions(choice, self.black_moves, self.white_moves, self.board)
 
+        for move in self.get_moves(self.black_moves):
+            if move not in self.priority:
+                self.set_priority(move, 0)
+        
+        for move in self.get_moves(self.white_moves):
+            if move not in self.priority:
+                self.set_priority(move, 0)
+
+    
+    # ////////////////////////////////////////////////////////////
+    # GETTERS
+    # ////////////////////////////////////////////////////////////
+
+    # Returns all the moves from a given moves dictionary.
+    def get_moves(self, moves_dict):
+        all_moves = []
+        for moves in moves_dict.values():
+            all_moves.extend(list(moves))
+        return all_moves
+
+    # Returns the priorty of the given move.
+    def get_priority(self, move):
+        return self.priority[move]
+    
+    # Sets the value of the given move.
+    def set_priority(self, move, value):
+        self.priority[move] = value
+
+    # Returns a list of moves ordered by priority.
+    def get_prioritized_moves(self, color):
+        all_moves = []
+        if color == black:
+            for moves in self.black_moves.values():
+                all_moves.extend(list(moves))
+        elif color == white:
+            for moves in self.white_moves.values():
+                all_moves.extend(list(moves))
+        
+        all_moves.sort(key=lambda move: self.get_priority(move), reverse=True)
+        return all_moves
+
+
+    # ////////////////////////////////////////////////////////////
+    # PUBLIC METHODS
+    # ////////////////////////////////////////////////////////////
 
     # Returns a new set of moves and updated board as a result of a move. Does not change the stored class variables. For use in minimax.
     def adjust_positions(self, move, black_moves, white_moves, board):
+        # Prepare all the variables.
         previous_position = move[0]
         new_position = move[1]
         black_moves = copy.deepcopy(black_moves)
@@ -129,7 +185,7 @@ class ChessBoard():
         name = board[previous_position]['name']
         same_moves[color][name].clear()
 
-        # In moves, if a piece was at the new square, remove that piece from the dictionary.
+        # In moves, if a piece was at the new square, remove that piece from moves.
         if board[new_position]:
             color = board[new_position]['color']
             name = board[new_position]['name']
@@ -145,8 +201,7 @@ class ChessBoard():
         name = board[new_position]['name']
         chess_move = ChessMove(color, board)
         moves = chess_move.moves(name[:-1], new_position)
-        moves = [{move_set: move, 'priority': 0} for move in moves]
-        same_moves[color][name].extend(moves)
+        same_moves[color][name].update(moves)
 
         # Clear all moves of pieces affected by the move, and then add the updated moves.
         squares = chess_move.occupied_squares(new_position)
@@ -157,8 +212,7 @@ class ChessBoard():
             same_moves[color][name].clear()
             chess_move.color = color
             moves = chess_move.moves(name[:-1], position)
-            moves = [{move_set: move, priority: 0} for move in moves]
-            same_moves[color][name].extend(moves)
+            same_moves[color][name].update(moves)
         
         return black_moves, white_moves, board
 
