@@ -92,7 +92,6 @@ class TestChess(unittest.TestCase):
         self.setUp()
 
         small_board = self.board_small
-        small_board.print_board()
         self.assertIn('queen0', small_board.white_moves, "queen0 should be in white moves before the move")
         self.assertFalse(small_board.board[(4, 2)]['name']=='bishop0', "Before move, bishop0 should not be in board position 42")
 

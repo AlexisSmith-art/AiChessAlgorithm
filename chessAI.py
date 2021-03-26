@@ -6,10 +6,10 @@ from datetime import datetime
 
 black = 'black'
 white = 'white'
-script_player = "Do you want to be the white or black player?\n"
-script_player_error = "I'm sorry. Please enter white or black.\n"
-script_move = "Please choose a move below.\n"
-script_move_error = "Move must be an integer. For example, '2'.\n"
+script_player = f"Do you want to be the {black} or {white} player?\n"
+script_player_error = f"I'm sorry. Please enter '{black}' or '{white}'.\n"
+script_move = f"Please choose a move below.\n"
+script_move_error = f"Move must be an integer. For example, '2'.\n"
 
 move_set = 'moves'
 priority = 'priority'
@@ -30,7 +30,7 @@ test_large = {
     'black_king': {(0, 4)},
 }
 
-# Test (height=8, width=4)
+# Test (HEIGHT=8, WIDTH=4)
 test_small = {
     'white_pawn': {(6, int) for int in range(4)},
     'white_rook': {(7, 0)},
@@ -44,6 +44,14 @@ test_small = {
     'black_king': {(0, 2)},
 }
 
+# If None, then it uses the standard starting arrangement.
+ARRANGEMENT = test_small
+HEIGHT = 8
+WIDTH = 4
+# Minimax depth.
+DEPTH = 2
+NOTE_TEXT = f'Played against an opponent using moves chosen by RNG.'
+
 class ChessAI(ChessBoard):
     def play(self):
         response = input(script_player)
@@ -55,7 +63,6 @@ class ChessAI(ChessBoard):
 
         counter = 0
         all_time = []
-        depth = 3
         while True:
             counter += 1
             if player == black:
@@ -81,9 +88,8 @@ class ChessAI(ChessBoard):
             
             before = time.perf_counter()
             self.print_board()
-            ai_move = self.best_move(depth, ai)
+            ai_move, value = self.best_move(DEPTH, ai)
             self._adjust_positions(ai_move)
-            value = self.evaluate(self.board)
             print(f'{ai} {ai_move} has a value of {value}')
             after = time.perf_counter()
             total_time = after - before
@@ -95,8 +101,8 @@ class ChessAI(ChessBoard):
         
         self.print_board()
         win_text = f'The winner is: {self.has_won(self.black_moves, self.white_moves)} in {counter} moves'
-        time_text = f'The ai({ai}) took an average of {sum(all_time)/len(all_time)}s per turn to make a move with a depth of {depth}.'
-        self.log_AI(win_text, time_text)
+        time_text = f'The ai({ai}) took an average of {"{:.2f}".format(sum(all_time)/len(all_time))}s per turn to make a move with a depth of {DEPTH} on a {HEIGHT}x{WIDTH} board.'
+        self.log_AI(win_text, time_text, NOTE_TEXT)
         print(win_text)
         print(time_text)
 
@@ -130,7 +136,7 @@ class ChessAI(ChessBoard):
                 elif new_value == value:
                     best_moves.append(move)
         move = random.choice(best_moves)
-        return move
+        return move, value
 
 
     # depth-limited minimax with alpha-beta pruning
@@ -159,19 +165,20 @@ class ChessAI(ChessBoard):
                     break
             return value
     
-    def log_AI(self, winner, time):
-        with open('AiChessAlgorithm/chess_log.txt', 'w') as f:
+    def log_AI(self, winner, time, note=None):
+        with open('AiChessAlgorithm/chess_log.txt', 'a') as f:
             f.write(
-f'''-----------------------------------------------------------------
+f'''\n-----------------------------------------------------------------
 
 {datetime.now()}
 {winner}
 {time}
+{f'Note: {note}'}
 
 -----------------------------------------------------------------''')
 
 
-ai = ChessAI(8, 4, test_small)
+ai = ChessAI(HEIGHT, WIDTH, ARRANGEMENT)
 ai.play()
 
 

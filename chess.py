@@ -39,26 +39,29 @@ symbols = {
 
 letters = ['0', '1', '2', '3', '4', '5', '6', '7']
 
+START_ARRANGEMENT = {
+    f'{black}_{pawn}': {(1, int) for int in range(8)},
+    f'{black}_{rook}': {(0, 0), (0, 7)},
+    f'{black}_{knight}': {(0, 1), (0, 6)},
+    f'{black}_{bishop}': {(0, 2), (0, 5)},
+    f'{black}_{queen}': {(0, 3)},
+    f'{black}_{king}': {(0, 4)},
+    f'{white}_{pawn}': {(6, int) for int in range(8)},
+    f'{white}_{rook}': {(7, 0), (7, 7)},
+    f'{white}_{knight}': {(7, 1), (7, 6)},
+    f'{white}_{bishop}': {(7, 2), (7, 5)},
+    f'{white}_{queen}': {(7, 3)},
+    f'{white}_{king}': {(7, 4)},
+}
+
 class ChessBoard():
 
-    start_arrangement = {
-        'black_pawn': {(1, int) for int in range(8)},
-        'black_rook': {(0, 0), (0, 7)},
-        'black_knight': {(0, 1), (0, 6)},
-        'black_bishop': {(0, 2), (0, 5)},
-        'black_queen': {(0, 3)},
-        'black_king': {(0, 4)},
-        'white_pawn': {(6, int) for int in range(8)},
-        'white_rook': {(7, 0), (7, 7)},
-        'white_knight': {(7, 1), (7, 6)},
-        'white_bishop': {(7, 2), (7, 5)},
-        'white_queen': {(7, 3)},
-        'white_king': {(7, 4)},
-    }
-
-    def __init__(self, height: int=8, width: int=8, dict=start_arrangement):
+    def __init__(self, height: int=8, width: int=8, dict=None):
         if height > 8 or height < 1 or width > 8 or width < 1:
             print('Height and width must be an integer between 1-8, inclusive.')
+        
+        if not dict:
+            dict = START_ARRANGEMENT
 
         self.height = height
         self.width = width
